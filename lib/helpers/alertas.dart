@@ -24,7 +24,7 @@ mostrarAlerta(BuildContext context, String titulo, String mensaje) {
       context: context,
       barrierDismissible: false,
       builder: (BuildContext context) {
-        if (!Platform.isAndroid) {
+        if (Platform.isAndroid) {
           return AlertDialog(
             title: Text(titulo),
             content: Text(mensaje),

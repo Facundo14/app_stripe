@@ -1,12 +1,16 @@
+import 'package:app_stripe/bloc/pagar/pagar_bloc.dart';
 import 'package:app_stripe/data/tarjetas.dart';
 import 'package:app_stripe/helpers/helpers.dart';
 import 'package:app_stripe/pages/tarjeta_page.dart';
+import 'package:app_stripe/services/stripe_service.dart';
 import 'package:app_stripe/widgets/total_pay_buttom.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_credit_card/credit_card_widget.dart';
 
 class HomePage extends StatelessWidget {
-  const HomePage({Key? key}) : super(key: key);
+  HomePage({Key? key}) : super(key: key);
+  final stripeService = StripeService();
 
   @override
   Widget build(BuildContext context) {
@@ -19,10 +23,18 @@ class HomePage extends StatelessWidget {
             IconButton(
               icon: const Icon(Icons.add),
               onPressed: () async {
-                // mostrarLoading(context);
-                // await Future.delayed(Duration(seconds: 1));
-                // Navigator.pop(context);
-                mostrarAlerta(context, 'Hola', 'Mundo');
+                mostrarLoading(context);
+                final pagarBloc = BlocProvider.of<PagarBloc>(context);
+                final resp = await stripeService.pagarConNuevaTarjeta(
+                  amount: pagarBloc.state.montoPagarString,
+                  currency: pagarBloc.state.moneda.toString(),
+                );
+                Navigator.pop(context);
+                if (resp.ok) {
+                  mostrarAlerta(context, 'Tarjeta Ok', 'Todo Correcto');
+                } else {
+                  mostrarAlerta(context, 'Algo salio mal', resp.msg);
+                }
               },
             )
           ],
@@ -43,6 +55,8 @@ class HomePage extends StatelessWidget {
                   final tarjeta = tarjetas[i];
                   return GestureDetector(
                     onTap: () {
+                      final pagarBloc = BlocProvider.of<PagarBloc>(context, listen: false);
+                      pagarBloc.add(OnSeleccionarTarjeta(tarjeta));
                       Navigator.push(context, navegarMapaFadeIn(context, const TarjetaPage()));
                     },
                     child: Hero(
